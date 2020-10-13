@@ -10,7 +10,7 @@ jobs:
           fetch-depth: 1
       - name: Download raw Brazil csv from OxCGRT database
         run: |
-          curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -o 'OxCGRTBrazil_nonimputed_latest.csv'
+          curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
    
       - name: Commit changes
         run: |
