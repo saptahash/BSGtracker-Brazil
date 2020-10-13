@@ -1,7 +1,7 @@
 name: Pull raw data from OxCGRT Brazil link
 on:
   schedule:
-    - cron: '*/60 * * * *'
+    - cron: '5 * * * *'
 
 jobs:
   build:
