@@ -1,5 +1,4 @@
 library(tidyverse)
-library(RCurl)
 library(rlang)
 library(here)
 
