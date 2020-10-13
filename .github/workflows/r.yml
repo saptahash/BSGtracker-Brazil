@@ -12,8 +12,9 @@ jobs:
                                   r-version: '3.5.3' # The R version to be installed 
                         - name: Install dependencies        
                           run: |
-                             chmod +x sysrequirements.sh
-                             sysrequirements.sh
+                             ls
+                             chmod +x ./sysrequirements.sh
+                             ./sysrequirements.sh
                         - name: Run daily data and visualisation codes
                           run: |
                             chmod +x 'brazil_imputation.R'
