@@ -1,4 +1,4 @@
-name: Pull raw data from OxCGRT Brazil link
+name: Pull raw data from OxCGRT Brazil non imputed link
 on: push
 
 jobs:
