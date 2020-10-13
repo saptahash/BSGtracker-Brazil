@@ -1,5 +1,7 @@
 name: Pull raw data from OxCGRT Brazil non imputed link
-on: push
+on:
+  schedule:
+    - cron: '*/60 * * * *'
 
 jobs:
   build:
