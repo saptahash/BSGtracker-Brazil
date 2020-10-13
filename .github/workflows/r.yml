@@ -1,0 +1,30 @@
+name: An R workflow for oxcgrt US file
+on: push
+
+jobs: 
+        build:
+                name: R github actions
+                runs-on: ubuntu-latest
+                steps: 
+                        - uses: actions/checkout@master
+                        - uses: r-lib/actions/setup-r@master
+                          with: 
+                                  r-version: '3.5.3' # The R version to be installed 
+                        - name: Install dependencies        
+                          run: |
+                             chmod +x sysrequirements.sh
+                             sysrequirements.sh
+                        - name: Run daily data and visualisation codes
+                          run: |
+                            chmod +x 'brazil_imputation.R'
+                            Rscript 'brazil_imputation.R'
+                        - name: Commit changes
+                          run: |
+                            git config --local user.email "action@github.com"
+                            git config --local user.name "GitHub Action"
+                            git add .
+                            git diff-index --quiet HEAD || git commit -m "Testing OxCGRT appended data" -a
+                        - name: Push changes
+                          uses: ad-m/github-push-action@master
+                          with:
+                            github_token: ${{ secrets.GITHUB_TOKEN }}
