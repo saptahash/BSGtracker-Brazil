@@ -12,6 +12,8 @@ jobs:
       - name: Download raw Brazil csv from OxCGRT database
         run: |
           ls
+          cd main 
+          ls
           curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
    
       - name: Commit changes
