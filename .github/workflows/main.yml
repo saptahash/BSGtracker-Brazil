@@ -1,11 +1,13 @@
 name: Pull raw data from OxCGRT Brazil non imputed API endpoint
-on: push
+on: 
+  schedule:
+    - cron: '*/5 * * *'
 
 jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@main
         with:
           fetch-depth: 1
       - name: Download raw Brazil csv from OxCGRT database
