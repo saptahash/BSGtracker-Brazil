@@ -13,8 +13,9 @@ jobs:
         run: |
           ls
           cd main 
-          ls
+          ls -a
           curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
+          git status
    
       - name: Commit changes
         run: |
