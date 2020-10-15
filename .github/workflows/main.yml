@@ -7,7 +7,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
         with:
-          ref: main
+          path: main
       - name: Download raw Brazil csv from OxCGRT database
         run: |
           curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
