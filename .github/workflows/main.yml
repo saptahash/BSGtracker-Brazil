@@ -19,4 +19,10 @@ jobs:
           git add .
           git diff-index --quiet HEAD || git commit -m "Pull latest OxCGRT non-imputed Brazil data" -a
           git push
+      - name: GitHub Push
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            branch: ${{ github.ref }}
+
 
