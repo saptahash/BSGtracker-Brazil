@@ -13,10 +13,14 @@ jobs:
         run: |
           curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
    
-      - name: Commit and push
+      - name: Commit changes
         run: |
-          git remote add github "https://$GITHUB_ACTOR:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY.git"
-          git pull github ${GITHUB_REF} --ff-only
-          git add ...
-          git commit -m "Latest brazil data"
-          git push github HEAD:${GITHUB_REF}
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git diff-index --quiet HEAD || git commit -m "Pull latest OxCGRT data" -a
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.6.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          branch: main
