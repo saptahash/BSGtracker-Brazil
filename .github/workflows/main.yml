@@ -14,11 +14,14 @@ jobs:
           curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
    
       - name: Commit changes
-        run: |
-          git config --local user.email "action@github.com"
-          git config --local user.name "GitHub Action"
-          git add .
-          git diff-index --quiet HEAD || git commit -m "Pull latest OxCGRT non-imputed Brazil data" -a
+        uses: EndBug/add-and-commit@v5
+        with:
+          author_name: Saptarshi
+          author_email: saptarshi3.14@gmail.com
+          branch: main
+          message: "Brazil data pull"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: GitHub Push
         uses: ad-m/github-push-action@v0.6.0
         with:  
