@@ -5,9 +5,9 @@ jobs:
   build:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@master
+      - uses: actions/checkout@v2
         with:
-          fetch-depth: 1
+          ref: main
       - name: Download raw Brazil csv from OxCGRT database
         run: |
           curl 'http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil' -s -f -Lo 'OxCGRTBrazil_nonimputed_latest.csv'
@@ -19,6 +19,6 @@ jobs:
           git add .
           git diff-index --quiet HEAD || git commit -m "Pull latest OxCGRT non-imputed Brazil data" -a
       - name: Push changes
-        uses: ad-m/github-push-action@master
+        uses: ad-m/github-push-action@main
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
