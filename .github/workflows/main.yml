@@ -1,7 +1,7 @@
 name: Pull raw data from OxCGRT Brazil non imputed API endpoint
 on: 
   schedule:
-    - cron: '*/5 * * *'
+    - cron: '*/5 * * * *'
 
 jobs:
   build:
