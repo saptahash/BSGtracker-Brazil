@@ -4,12 +4,12 @@ library(tidyverse)
 library(RCurl)
 library(rlang)
 library(here)
-
+renv::restore()
 #init()
 #brazil_nonimp <- getURL("http://oxcgrtportal.azurewebsites.net/api/csvdownload?type=subnational_brazil")
 
 ## set path correctly
-brazildatapath <- "https://raw.githubusercontent.com/saptahash/BSGtracker-Brazil/master/OxCGRTBrazil_nonimputed_latest.csv"
+brazildatapath <- "https://raw.githubusercontent.com/saptahash/BSGtracker-Brazil/main/OxCGRTBrazil_nonimputed_latest.csv"
 brazildata <- read.csv(brazildatapath)
 
 ## define indicators
@@ -36,39 +36,127 @@ temp_tibble <- NULL
 
 #### STEP 1 - Aggregate Up to get STATE_ALL
 
+
+city_gov_condensed <- NULL
+
 for(i in indicators){
   level <- str_subset(str_subset(names(citydata), pattern = i), pattern = "(Notes|Flag)", negate = T)
   flag <- str_subset(str_subset(names(citydata), pattern = i), pattern = "Flag")
   if(length(flag) > 0){
+    maxlevel <- paste0("max", level)
+    meanlevel <- paste0("mean", level)
+    meanflag <- paste0("mean", flag)
     temp_tibble <- 
-      citydata %>% 
-      select(RegionName, RegionCode, CityName, CityCode, Date, !!sym(level), !!sym(flag)) %>%
-      group_by(RegionName, Date) %>%
+      citydata %>%
+      group_by(Date, RegionName) %>%
+      select(RegionName, RegionCode, CityCode, CityName, Date, !!sym(level), !!sym(flag)) %>%
       filter(!is.na(!!sym(level))) %>%
-      arrange(RegionName, Date, !!sym(level), CityCode) %>%
-      slice_tail(1) 
+      summarise(!!maxlevel := max(!!sym(level)), 
+                !!meanlevel := mean(!!sym(level), na.rm = T),
+                !!meanflag := mean(!!sym(flag), na.rm = T)) %>%
+      mutate(!!meanflag := ifelse(!!sym(meanlevel) == 0, NA, !!sym(meanflag)))
+  } else {
+    maxlevel <- paste0("max", level)
+    meanlevel <- paste0("mean", level)
     temp_tibble <- 
-      temp_tibble %>% 
-      mutate(!!flag := ifelse(!is.na(!!sym(flag)),ifelse(CityCode == "STATE_GOV", !!sym(flag), 0), NA)) %>%
-      select(-starts_with("City"))
-  } else{
-    temp_tibble <- 
-      citydata %>% 
-      select(RegionName, RegionCode, CityName, CityCode, Date, !!sym(level)) %>%
-      group_by(RegionName, Date) %>%
+      citydata %>%
+      group_by(Date,RegionName) %>%
+      select(RegionName, RegionCode, CityCode, CityName, Date, !!sym(level)) %>%
       filter(!is.na(!!sym(level))) %>%
-      arrange(RegionName, Date, !!sym(level), CityCode) %>%
-      slice_tail(1) %>%
-      select(-starts_with("City"))
+      summarise(!!maxlevel := min(!!sym(level)), #max level is now min level
+                !!meanlevel := mean(!!sym(level), na.rm = T))
   }
-  if(length(agg_tibble) > 0){
-    agg_tibble <- left_join(agg_tibble, temp_tibble, by = c("RegionName" = "RegionName",
-                                                            "RegionCode" = "RegionCode",
-                                                            "Date" = "Date"))
-  } else{
-    agg_tibble <- temp_tibble
-  } 
+  if(length(city_gov_condensed) == 0){
+    city_gov_condensed <- temp_tibble
+  } else {
+    city_gov_condensed <- left_join(city_gov_condensed, temp_tibble, by = c("Date", "RegionName"))
+  }
 }
+
+i <- paste(indicators, collapse = "|")
+i <- str_subset(names(brazildata), pattern = i) 
+
+state_gov <- 
+  brazildata %>%
+  filter(Jurisdiction == "STATE_GOV") %>%
+  arrange(Date) %>%
+  select(-contains("Notes")) %>%
+  select(Date, RegionName, RegionCode, contains(indicators))
+
+temp_tibble <- left_join(state_gov, city_gov_condensed, by = c("Date", "RegionName"))
+
+for(i in indicators){
+  level <- str_subset(str_subset(names(citydata), pattern = i), pattern = "(Notes|Flag)", negate = T)
+  flag <- str_subset(str_subset(names(citydata), pattern = i), pattern = "Flag")
+  maxlevel <- paste0("max", level)
+  meanlevel <- paste0("mean", level)
+  meanflag <- paste0("mean", flag)
+  if(length(flag > 0)){
+    temp_tibble <- 
+      temp_tibble %>%
+      mutate(!!flag := ifelse(!is.na(!!sym(flag)),
+                              ifelse(!!sym(level) < !!sym(maxlevel),
+                                     ifelse(!!sym(meanflag) == 1 & (!!sym(meanlevel) == !!sym(maxlevel)),
+                                            1,
+                                            0),
+                                     !!sym(flag)),
+                              ifelse(is.na(!!sym(meanflag)), 
+                                     NA, 
+                                     ifelse((!!sym(meanflag) == 1) & (!!sym(meanlevel) == !!sym(maxlevel)), 1, 0))),
+             !!level := ifelse(!is.na(!! sym(level)),
+                               ifelse(!!sym(level) <= !!sym(maxlevel), !!sym(maxlevel), !!sym(level)),
+                               !!sym(maxlevel)))
+  } else {
+    temp_tibble <- 
+      temp_tibble %>%
+      mutate(!!level := ifelse(!is.na(!! sym(level)),
+                               ifelse(!!sym(level) <= !!sym(maxlevel), !!sym(maxlevel), !!sym(level)),
+                               !!sym(maxlevel)))
+  }
+}
+
+i <- paste(indicators, collapse = "|")
+i <- str_subset(names(nat_gov), pattern = i) 
+
+agg_tibble <- 
+  temp_tibble %>%
+  select(-contains(c("mean", "max")))
+  
+
+# 
+# for(i in indicators){
+#   level <- str_subset(str_subset(names(citydata), pattern = i), pattern = "(Notes|Flag)", negate = T)
+#   flag <- str_subset(str_subset(names(citydata), pattern = i), pattern = "Flag")
+#   if(length(flag) > 0){
+#     temp_tibble <- 
+#       citydata %>% 
+#       select(RegionName, RegionCode, CityName, CityCode, Date, !!sym(level), !!sym(flag)) %>%
+#       group_by(RegionName, Date) %>%
+#       filter(!is.na(!!sym(level))) %>%
+#       arrange(RegionName, Date, !!sym(level), CityCode) %>%
+#       slice_tail(1) 
+#     temp_tibble <- 
+#       temp_tibble %>% 
+#       mutate(!!flag := ifelse(!is.na(!!sym(flag)),ifelse(CityCode == "STATE_GOV", !!sym(flag), 0), NA)) %>%
+#       select(-starts_with("City"))
+#   } else{
+#     temp_tibble <- 
+#       citydata %>% 
+#       select(RegionName, RegionCode, CityName, CityCode, Date, !!sym(level)) %>%
+#       group_by(RegionName, Date) %>%
+#       filter(!is.na(!!sym(level))) %>%
+#       arrange(RegionName, Date, !!sym(level), CityCode) %>%
+#       slice_tail(1) %>%
+#       select(-starts_with("City"))
+#   }
+#   if(length(agg_tibble) > 0){
+#     agg_tibble <- left_join(agg_tibble, temp_tibble, by = c("RegionName" = "RegionName",
+#                                                             "RegionCode" = "RegionCode",
+#                                                             "Date" = "Date"))
+#   } else{
+#     agg_tibble <- temp_tibble
+#   } 
+# }
 
 ## agg_tibble now represents STATE_ALL from first level
 
@@ -140,12 +228,12 @@ city_gov <-
   brazildata %>%
   filter(CityName != "" & CityName != "State government")
 
-temp_tibble <- state_all 
+temp_tibble <- state_gov
 
 for(i in indicators){
   cols <- str_subset(names(temp_tibble), pattern = i)
   for(c in cols){
-    newc <- paste0(c, "_stateall")
+    newc <- paste0(c, "_stategov")
     names(temp_tibble)[names(temp_tibble) == c] <- newc
   }
 }
@@ -159,8 +247,8 @@ cityall <- NULL
 for(i in indicators){
   level <- str_subset(str_subset(names(citydata), pattern = i), pattern = "(Notes|Flag)", negate = T)
   flag <- str_subset(str_subset(names(citydata), pattern = i), pattern = "Flag")
-  stateall_level <- paste(level, "_stateall", sep = "")
-  stateall_flag <- paste(flag, "_stateall", sep  = "")
+  stateall_level <- paste(level, "_stategov", sep = "")
+  stateall_flag <- paste(flag, "_stategov", sep  = "")
   if(length(flag)>0){
     temp_tibble <- 
       city_gov %>%
@@ -191,6 +279,9 @@ for(i in indicators){
   }
 }
 
+
+## Inheritance from NAT_GOV to CITY_GOV
+
 nat_gov <- 
   brazildata %>%
   filter(Jurisdiction == "NAT_GOV") %>%
@@ -201,12 +292,64 @@ nat_gov <-
   select(ends_with("Name"), ends_with("Code"), Jurisdiction, Date, contains(indicators)) %>%
   mutate(RegionCode = "BRA_ALL")
 
-cityall$Jurisdiction <- "CITY_ALL"
+temp_tibble <- 
+  nat_gov %>%
+  select(-ends_with("Name"), -ends_with("Code"), -Jurisdiction)
+
+for(i in indicators){
+  cols <- str_subset(names(temp_tibble), pattern = i)
+  for(c in cols){
+    newc <- paste0(c, "_natgov")
+    names(temp_tibble)[names(temp_tibble) == c] <- newc
+  }
+}
+
+cityall <-
+  left_join(cityall, temp_tibble,by = c("Date" = "Date"))
+
+cityall_final <- NULL
+
+for(i in indicators){
+  level <- str_subset(str_subset(names(citydata), pattern = i), pattern = "(Notes|Flag)", negate = T)
+  flag <- str_subset(str_subset(names(citydata), pattern = i), pattern = "Flag")
+  natgov_level <- paste(level, "_natgov", sep = "")
+  natgov_flag <- paste(flag, "_natgov", sep  = "")
+  if(length(flag)>0){
+    temp_tibble <- 
+      cityall %>%
+      mutate(!!level := ifelse(is.na(!!sym(natgov_level)), !!sym(level),
+                               ifelse(is.na(!!sym(level)) & !is.na(!!sym(natgov_level)) & (!!sym(natgov_flag) == 1), !!sym(natgov_level),
+                                      ifelse(!is.na(!!sym(level)) & !is.na(!!sym(natgov_level)) & (!!sym(level) > !!sym(natgov_level)),!!sym(level),
+                                             ifelse(!is.na(!!sym(level)) & !is.na(!!sym(natgov_level)) & (!!sym(level) < !!sym(natgov_level)) & (!!sym(natgov_flag) == 1), !!sym(natgov_level), !!sym(level))))),
+             !!flag := case_when(!is.na(!!sym(level)) & !is.na(!!sym(natgov_level)) & (!!sym(level) == !!sym(natgov_level)) & (!!sym(natgov_flag) == 1) ~ 1,
+                                 TRUE ~ as.numeric(!!sym(flag)))) %>%
+      select(RegionName, RegionCode, CityName, CityCode, Date, !!level, !!flag)
+  } else {
+    temp_tibble <- 
+      cityall %>%
+      mutate(!!level := ifelse(is.na(!!sym(natgov_level)), !!sym(level),
+                               ifelse(is.na(!!sym(level)) & !is.na(!!sym(natgov_level)), !!sym(natgov_level),
+                                      ifelse(!is.na(!!sym(level)) & !is.na(!!sym(natgov_level)) & (!!sym(level) > !!sym(natgov_level)),!!sym(level),
+                                             ifelse(!is.na(!!sym(level)) & !is.na(!!sym(natgov_level)) & (!!sym(level) < !!sym(natgov_level)), !!sym(natgov_level), !!sym(level)))))) %>%
+      select(RegionName, RegionCode, CityName, CityCode, Date, !!level)
+  }
+  if(length(cityall_final) > 0){
+    cityall_final <- left_join(cityall_final, temp_tibble, by = c("RegionName" = "RegionName",
+                                                      "RegionCode" = "RegionCode", 
+                                                      "Date" = "Date",
+                                                      "CityName" = "CityName",
+                                                      "CityCode" = "CityCode"))
+  } else {
+    cityall_final <- temp_tibble
+  }
+}
+
+cityall_final$Jurisdiction <- "CITY_ALL"
 state_all$Jurisdiction <- "STATE_ALL"
 
 #imputed_all <- bind_rows(nat_gov, cityall, state_all) %>% fill(CountryCode, CountryName, .direction = "updown")
 
-vars <- names(cityall)
+vars <- names(cityall_final)
 
 city_gov <- 
   brazildata %>%
@@ -248,7 +391,7 @@ for(i in indicators){
       group_by(Date) %>%
       select(RegionName, RegionCode, Date, !!sym(level)) %>%
       filter(!is.na(!!sym(level))) %>%
-      summarise(!!maxlevel := max(!!sym(level)), 
+      summarise(!!maxlevel := min(!!sym(level)), 
                 !!meanlevel := mean(!!sym(level), na.rm = T))
   }
   if(length(state_all_condensed) == 0){
@@ -283,13 +426,13 @@ for(i in indicators){
       temp_tibble %>%
       mutate(!!flag := ifelse(!is.na(!!sym(flag)),
                               ifelse(!!sym(level) < !!sym(maxlevel),
-                                     ifelse(!!sym(meanflag) == 1,
+                                     ifelse(!!sym(meanflag) == 1 & (!!sym(meanlevel) == !!sym(maxlevel)),
                                             1,
                                             0),
                                      !!sym(flag)),
                               ifelse(is.na(!!sym(meanflag)), 
                                      NA, 
-                                     ifelse(!!sym(meanflag) == 1, 1, 0))),
+                                     ifelse((!!sym(meanflag) == 1) & (!!sym(meanlevel) == !!sym(maxlevel)), 1, 0))),
              !!level := ifelse(!is.na(!! sym(level)),
                                ifelse(!!sym(level) <= !!sym(maxlevel), !!sym(maxlevel), !!sym(level)),
                                !!sym(maxlevel)))
@@ -325,8 +468,7 @@ nat_gov <-
   select(ends_with("Name"), ends_with("Code"), Jurisdiction, Date, contains(indicators)) %>%
   mutate(RegionCode = "BRA_ALL")
 
-imputed_all <- bind_rows(nat_gov, nat_all, cityall, city_gov, state_all, state_gov) %>% fill(CountryCode, CountryName, .direction = "updown")
-
+imputed_all <- bind_rows(nat_gov, nat_all, cityall_final, city_gov, state_all, state_gov) %>% fill(CountryCode, CountryName, .direction = "updown")
   
 ## code credit to Andrew Wood
 imputed_all$C1Stringency <- 100*(imputed_all$`C1_School.closing`-0.5*(1-imputed_all$C1_Flag))/3
@@ -344,29 +486,30 @@ imputed_all$H3Stringency <- 100*(imputed_all$`H3_Contact.tracing`)/2
 imputed_all$H6Stringency <- 100*(imputed_all$H6_Facial.Coverings-0.5*(1-imputed_all$H6_Flag))/4
 
 for(i in indicators){
+  level <- str_subset(str_subset(names(imputed_all), pattern = i), pattern = "(Notes|Flag|Stringency)", negate = T)
+  flag <- str_subset(str_subset(names(imputed_all), pattern = i), pattern = "Flag")
   stringency <- paste0(i, "Stringency")
   imputed_all <- 
     imputed_all %>%
     group_by(Jurisdiction, RegionName, CityName) %>%
     arrange(Jurisdiction, RegionName, CityName,Date) %>%
     fill(!!stringency, .direction = "down") %>%
-    mutate(!!stringency := ifelse(is.na(!!sym(stringency)), 0, !!sym(stringency)))
+    mutate(!!stringency := ifelse(is.na(!!sym(stringency)) | !!sym(level) == 0 | is.na(!!sym(level)), 0, !!sym(stringency)))
 }
 
 imputed_all$StringencyIndex <- rowMeans(imputed_all[,c("C1Stringency", "C2Stringency", "C3Stringency",
                                                        "C4Stringency", "C5Stringency", "C6Stringency",
-                                                       "C7Stringency", "C8Stringency", "H1Stringency")])
+                                                       "C7Stringency", "C8Stringency", "H1Stringency")], na.rm = T)
 
 imputed_all$ContainmentHealthIndex <- rowMeans(imputed_all[,c("C1Stringency", "C2Stringency", "C3Stringency",
                                                               "C4Stringency", "C5Stringency", "C6Stringency",
                                                               "C7Stringency", "C8Stringency", "H1Stringency", "H2Stringency",
-                                                              "H3Stringency")])
+                                                              "H3Stringency")], na.rm = T)
 
 imputed_all$ContainmentHealthIndex_new <- rowMeans(imputed_all[,c("C1Stringency", "C2Stringency", "C3Stringency",
                                                                   "C4Stringency", "C5Stringency", "C6Stringency",
                                                                   "C7Stringency", "C8Stringency", "H1Stringency", "H2Stringency",
-                                                                  "H3Stringency", "H6Stringency")])
-
+                                                                  "H3Stringency", "H6Stringency")], na.rm = T)
 
 imputed_all <- imputed_all %>% select(-ends_with("Stringency"))  
 

@@ -1,0 +1,55 @@
+,CityName,RegionName,GeoRegion,GeoRegiao,Capital,PolicyBrief
+1,Ji-Parana,Rondonia,North,Norte,,
+2,Porto Velho,Rondonia,North,Norte,Yes,
+3,Cruzeiro do Sul,Acre,North,Norte,,
+4,Rio Branco,Acre,North,Norte,Yes,
+5,Manaus,Amazonas,North,Norte,Yes,Yes
+6,Parintins,Amazonas,North,Norte,,
+7,Boa Vista,Roraima,North,Norte,Yes,
+8,Rorainopolis,Roraima,North,Norte,,
+9,Ananindeua,Para,North,Norte,,
+10,Belem,Para,North,Norte,Yes,Yes
+11,Santarem,Para,North,Norte,,
+12,Laranjal do Jari,Amapa,North,Norte,,
+13,Macapa,Amapa,North,Norte,Yes,
+14,Araguaina,Tocantins,North,Norte,,
+15,Palmas,Tocantins,North,Norte,Yes,
+16,Imperatriz,Maranhao,Northeast,Nordeste,,
+17,Sao Luis,Maranhao,Northeast,Nordeste,Yes,
+18,Parnaiba,Piaui,Northeast,Nordeste,,
+19,Teresina,Piaui,Northeast,Nordeste,Yes,
+20,Caucaia,Ceara,Northeast,Nordeste,,
+21,Fortaleza,Ceara,Northeast,Nordeste,Yes,Yes
+22,Mossoro,Rio Grande do Norte,Northeast,Nordeste,,
+23,Natal,Rio Grande do Norte,Northeast,Nordeste,Yes,
+24,Campina Grande,Paraiba,Northeast,Nordeste,,
+25,Joao Pessoa,Paraiba,Northeast,Nordeste,Yes,
+26,Jaboatao dos Guararapes,Pernambuco,Northeast,Nordeste,,
+27,Recife,Pernambuco,Northeast,Nordeste,Yes,Yes
+28,Arapiraca,Alagoas,Northeast,Nordeste,,
+29,Maceio,Alagoas,Northeast,Nordeste,Yes,
+30,Aracaju,Sergipe,Northeast,Nordeste,Yes,
+31,Lagarto,Sergipe,Northeast,Nordeste,,
+32,Feira de Santana,Bahia,Northeast,Nordeste,,
+33,Salvador,Bahia,Northeast,Nordeste,Yes,Yes
+34,Belo Horizonte,Minas Gerais,Southeast,Sudeste,Yes,
+35,Uberlandia,Minas Gerais,Southeast,Sudeste,,
+36,Vila Velha,Espirito Santo,Southeast,Sudeste,,
+37,Vitoria,Espirito Santo,Southeast,Sudeste,Yes,
+38,Rio de Janeiro,Rio de Janeiro,Southeast,Sudeste,Yes,Yes
+39,Sao Goncalo,Rio de Janeiro,Southeast,Sudeste,,
+40,Guarulhos,Sao Paulo,Southeast,Sudeste,,
+41,Sao Paulo,Sao Paulo,Southeast,Sudeste,Yes,Yes
+42,Curitiba,Parana,South,Sul,Yes,
+43,Londrina,Parana,South,Sul,,
+44,Florianopolis,Santa Catarina,South,Sul,Yes,
+45,Joinville,Santa Catarina,South,Sul,,
+46,Caxias do Sul,Rio Grande do Sul,South,Sul,,
+47,Porto Alegre,Rio Grande do Sul,South,Sul,Yes,Yes
+48,Campo Grande,Mato Grosso do Sul,Mid West,Centro-Oeste,Yes,
+49,Dourados,Mato Grosso do Sul,Mid West,Centro-Oeste,,
+50,Cuiaba,Mato Grosso,Mid West,Centro-Oeste,Yes,
+51,Rondonopolis,Mato Grosso,Mid West,Centro-Oeste,,
+52,Aparecida de Goiania,Goias,Mid West,Centro-Oeste,,
+53,Goiania,Goias,Mid West,Centro-Oeste,Yes,Yes
+,Brasilia,Federal District,Mid West,Centro-Oeste,Yes,
