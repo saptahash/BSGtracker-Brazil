@@ -3,7 +3,11 @@ library(feather)
 library(lubridate)
 library(ggrepel)
 library(sf)
-renv::install("sf")
+library(dplyr)
+library(tidyr)
+library(stringr)
+library(ggthemes)
+renv::install("ggthemes")
 renv::snapshot()
 
 # Graphs to produce: 
@@ -11,19 +15,390 @@ renv::snapshot()
 # 2. Line Plots 
 # 3. Chloropleths
 
-#oxcgrtdata <- read_feather("./brazil_state_risk_of_openness.feather")
-oxcgrtdata <- read_feather("./brazil_stategov_risk_of_openness.feather")
+## Import Data -----------------------------------------
+oxcgrtdata <- read_feather("./brazil_state_risk_of_openness.feather")
+city_all <- read_feather("./brazil_cityall_risk_of_openness.feather") 
+regionmap <- read.csv("brazil_citystateregions_geo_pb.csv")
 
-# Lineplots 
+## merge state IBGE codes -------------------------
+state_codes <- 
+  city_all %>%
+  select(RegionName, RegionCode, CityCode) %>%
+  mutate(StateCode = str_extract(CityCode, pattern = "_[0-9][0-9]"),
+         StateCode = str_extract(CityCode, pattern = "[0-9][0-9]")) %>%
+  select(RegionCode, StateCode, RegionName)
+
+state_codes <- unique(state_codes)
+
+oxcgrtdata <- 
+  left_join(oxcgrtdata, state_codes, by = c("RegionName", "RegionCode"))
+
+## STATE_TOTAL graphs -----------------------------------
+
+## STATE_TOTAL subset data ===============================
 
 temp_tibble <- 
   oxcgrtdata %>%
   mutate(Date = ymd(Date)) %>%
   filter(Date < "2020-10-10") %>%
-  select(RegionName, RegionCode, Date, pop, risk_of_openness, moveave_newcases, cases_controlled, test_and_trace, community_understanding, manage_imported_cases, endemic_factor, StringencyIndexForDisplay) %>%
+  select(RegionName, RegionCode, StateCode, Date, pop, risk_of_openness, moveave_newcases, cases_controlled, test_and_trace, community_understanding, manage_imported_cases, endemic_factor, StringencyIndexForDisplay) %>%
   filter(RegionName != "")
 
-regionmap <- read.csv("brazil_citystateregions_geo_pb.csv")
+## STATE_TOTAL scatter plots ========================================
+month_levels <- c("January", "February", "March", "April", "May", "June", "July", "August", 
+                  "September", "October", "November", "December")
+
+base_tibble <- 
+  temp_tibble %>%
+  mutate(month = month(Date)) %>%
+  group_by(month, RegionName, StateCode) %>%
+  summarise(mean_rooi = mean(risk_of_openness, na.rm = T),
+            mean_stringency = mean(StringencyIndexForDisplay, na.rm = T), 
+            mean_rooi = ifelse(is.finite(mean_rooi), mean_rooi, NA),
+            mean_newcases = mean(moveave_newcases, na.rm = T),
+            mean_newcases = ifelse(is.finite(mean_newcases), mean_newcases, NA),
+            pop = mean(pop, na.rm = T)) %>%
+  mutate(month = month.name[month],
+         month = factor(month, levels = month_levels)) %>%
+  filter(month != "January" & month != "October")
+
+base_tibble <- left_join(base_tibble, unique(regionmap %>% select(GeoRegion, RegionName)), by = c("RegionName"))
+
+base_tibble <- 
+  base_tibble %>%
+  ungroup() %>%
+  mutate(GeoRegion = ifelse(is.na(GeoRegion), "Mid West", as.character(GeoRegion)),
+         StateCode = ifelse(RegionName == "Distrito Federal", 53, StateCode))
+
+plot <-
+  ggplot(base_tibble, aes(x = mean_rooi, y = mean_stringency, label = RegionName)) +# color = factor(lightup_state), label = CountryCode)) + 
+  geom_point(aes(size = pop, colour = GeoRegion)) + 
+  #lims(colour = c("0", "1")) + 
+  scale_color_viridis_d(name = "Region") +
+  expand_limits(y = c(0,100), x = c(0,1)) +
+  geom_text_repel(data = subset(base_tibble, (mean_stringency < 50 & mean_rooi > 0.5) & month != "March"), 
+                  size = 3, colour = "black") +
+  #geom_hline(yintercept = 50, size = 0.7, linetype = 2) + 
+  geom_vline(xintercept = 0.5, size = 0.7, linetype = 2) +
+  labs(x = "Risk of Openness", 
+       y = "Stringency Index", 
+       #         title = "Stringency Index and Openness Risk over last quarter",
+       #         subtitle = "(Bubble Size reflects number of new cases)", 
+       caption = "Bubble Size reflects population \n Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.caption = element_text(hjust = 0.5, face = "italic"), 
+        plot.subtitle = element_text(hjust = 0.5, size = 10)) +
+  guides(size = F) + 
+  #scale_colour_discrete(name = "", breaks = c(1), labels = c("Scaling back lockdown")) +
+  scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100)) + 
+  scale_x_continuous(breaks = c(seq(from = 0, to = 1, by = 0.2), 0.5)) +
+  #scale_colour_discrete(name = "", breaks = c(1), labels = c("Dropped stringency levels in previous week\n (7 days prior to date)")) +
+  scale_size(range = c(2,7)) +
+  theme(
+    # Remove panel border
+    #panel.border = element_blank(),  
+    # Remove panel grid lines
+    panel.grid.major = element_line(size = 0.5, linetype = "dashed", colour = "grey"),
+    #panel.grid.minor = element_blank(),
+    # Remove panel background
+    panel.background = element_blank(),
+    # Add axis line
+    axis.line = element_line(colour = "grey"),
+    plot.caption = element_text(hjust = 0.5, face = "italic"),
+    panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  facet_wrap(~ month)
+
+ggsave(plot = plot,
+       filename = "../graphs/brazilrooi_stateall_scatterplotdetail_monthly.png", 
+       width = 12, 
+       height = 8)
+
+
+## STATE_TOTAL lineplots ==========================================
+for(i in unique(temp_tibble$RegionName)){
+  filename <- paste0("../graphs/policy-briefs/brazilrooi_", i, "_lineplot.png")
+  base_tibble <- 
+    temp_tibble %>%
+    mutate(dum = ifelse((RegionName == !!i), "1", "0")) %>%
+    filter((Date < ymd("2020-10-01")) & Date > ymd("2020-02-25"))
+  
+  plot <-
+    ggplot() + 
+    geom_line(data = base_tibble, aes(y = risk_of_openness, group = RegionName, size = dum,  x = Date, colour = dum)) + 
+    scale_color_manual(values = c("0" = alpha("gray", 0.4), "1" = "red"), 
+                       breaks = c("1"), 
+                       name = "", 
+                       labels = c(i)) + 
+    scale_size_manual(values = c("1" = 1, "0" = 0.5)) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%d-%b") +
+    expand_limits(y = c(0, 1)) +
+    guides(size = F) +
+    labs(x = "Date", 
+         y = "Risk of Openness",
+         caption = "Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") +
+    theme(
+      # Remove panel border
+      #panel.border = element_blank(),  
+      # Remove panel grid lines
+      panel.grid.major = element_line(size = 0.5, linetype = "dashed", colour = "grey"),
+      #panel.grid.minor = element_blank(),
+      # Remove panel background
+      panel.background = element_blank(),
+      # Add axis line
+      axis.line = element_line(colour = "black"),
+      plot.caption = element_text(hjust = 0.5, face = "italic"),
+      legend.key = element_blank(),
+      legend.key.size = unit(3, "line"),
+      legend.text = element_text(size = 12),
+      legend.position = "bottom"
+      #panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )
+  
+  ggsave(plot = plot, 
+         filename = filename,
+         width = 12, 
+         height = 8)
+  
+}
+
+## STATE_TOTAL Chloropleth maps ==================================
+geopath <- "../data/input/shapefiles/BRUFE250GC_SIR.shp"
+
+month_levels <- c("January", "February", "March", "April", "May", "June", "July", "August", 
+                  "September", "October", "November", "December")
+
+base_tibble <- 
+  temp_tibble %>%
+  mutate(month = month(Date)) %>%
+  group_by(month, RegionName, StateCode) %>%
+  summarise(mean_rooi = mean(risk_of_openness, na.rm = T),
+            mean_stringency = mean(StringencyIndexForDisplay, na.rm = T), 
+            mean_rooi = ifelse(is.finite(mean_rooi), mean_rooi, NA),
+            mean_newcases = mean(moveave_newcases, na.rm = T),
+            mean_newcases = ifelse(is.finite(mean_newcases), mean_newcases, NA),
+            pop = mean(pop, na.rm = T)) %>%
+  mutate(month = month.name[month],
+         month = factor(month, levels = month_levels)) %>%
+  filter(month != "January" & month != "October")
+
+base_tibble <- left_join(base_tibble, unique(regionmap %>% select(GeoRegion, RegionName)), by = c("RegionName"))
+
+base_tibble <- 
+  base_tibble %>%
+  ungroup() %>%
+  mutate(GeoRegion = ifelse(is.na(GeoRegion), "Mid West", as.character(GeoRegion)),
+         StateCode = ifelse(RegionName == "Distrito Federal", 53, StateCode))
+
+
+list.files(geopath)
+brazilshp <- st_read(geopath)
+
+brazilshp <- 
+  left_join(brazilshp, base_tibble, by = c("CD_GEOCUF" = "StateCode"))
+
+plot <- 
+  ggplot(brazilshp) +
+  geom_sf(aes(fill = mean_rooi)) + 
+  ggthemes::theme_map() +
+  labs(title = "",
+       caption = "Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker" ) + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.caption = element_text(hjust = 0.5, face = "italic"), 
+        legend.position = "right", 
+        strip.text = element_text(size = 10)) +
+  scale_fill_viridis_c(option = "viridis", name = "Risk of Openness", na.value = "white", direction = -1, 
+                       breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.0)) + 
+  facet_wrap(~month)
+
+ggsave(plot = plot,
+       filename = "../graphs/brazilrooi_state_chloropleth_monthly.png", 
+       width = 12, 
+       height = 8)
+
+
+# END of STATE_TOTAL graphs ==========================================================
+
+# CITY_TOTAL GRAPHS --------------------------------------------------------
+
+## CITY_TOTAL scatter plots ==========================================================
+key_cities <- 
+  regionmap %>%
+  filter(PolicyBrief == "Yes") %>%
+  pull(CityName)
+
+temp_tibble <- 
+  city_all %>%
+  mutate(Date = ymd(Date)) %>%
+  filter(Date < "2020-10-10") %>%
+  select(CityName, CityCode, Date, RegionName,  risk_of_openness, pop_100k, moveave_newcases, cases_controlled, test_and_trace, community_understanding, manage_imported_cases, endemic_factor, StringencyIndexForDisplay) %>%
+  filter(CityName != "")
+
+month_levels <- c("January", "February", "March", "April", "May", "June", "July", "August", 
+                  "September", "October", "November", "December")
+
+base_tibble <- 
+  temp_tibble %>%
+  mutate(month = month(Date)) %>%
+  group_by(month, CityName) %>%
+  summarise(mean_rooi = mean(risk_of_openness, na.rm = T),
+            mean_stringency = mean(StringencyIndexForDisplay, na.rm = T), 
+            mean_rooi = ifelse(is.finite(mean_rooi), mean_rooi, NA),
+            mean_newcases = mean(moveave_newcases, na.rm = T),
+            pop_100k = mean(pop_100k),
+            mean_newcases = ifelse(is.finite(mean_newcases), mean_newcases, NA)) %>%
+  mutate(month = month.name[month],
+         month = factor(month, levels = month_levels)) %>%
+  filter(month != "January" & month != "October")
+
+base_tibble <- left_join(base_tibble, regionmap, by = c("CityName"))
+
+plot <-
+  ggplot(base_tibble, aes(x = mean_rooi, y = mean_stringency, label = CityName)) + #, label = CityName)) +# color = factor(lightup_state), label = CountryCode)) + 
+  geom_point(aes(size = pop_100k, colour = GeoRegion)) + 
+  scale_colour_viridis_d(name = "Region") +
+  #lims(colour = c("0", "1")) + 
+  geom_text_repel(data = subset(base_tibble, CityName %in% key_cities),
+                  size = 3, colour = "black") +
+#  geom_hline(yintercept = 50, size = 0.7, linetype = 2) + 
+#  geom_vline(xintercept = 0.5, size = 0.7, linetype = 2) +
+  labs(x = "Risk of Openness", 
+       y = "Stringency Index", 
+       #         title = "Stringency Index and Openness Risk over last quarter",
+       #         subtitle = "(Bubble Size reflects number of new cases)", 
+       caption = "Bubble Size reflects population \n Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.caption = element_text(hjust = 0.5, face = "italic"), 
+        plot.subtitle = element_text(hjust = 0.5, size = 10)) +
+  guides(size = F) + 
+  expand_limits(y = c(0, 100)) +
+  #scale_colour_discrete(name = "", breaks = c(1), labels = c("Scaling back lockdown")) +
+  scale_y_continuous(breaks = c(0, 20, 40, 60, 80, 100)) + 
+  scale_x_continuous(breaks = c(seq(from = 0, to = 1, by = 0.2))) +
+  #scale_colour_discrete(name = "", breaks = c(1), labels = c("Dropped stringency levels in previous week\n (7 days prior to date)")) +
+  scale_size(range = c(1,4)) +
+  theme(
+    # Remove panel border
+    #panel.border = element_blank(),  
+    # Remove panel grid lines
+    panel.grid.major = element_line(size = 0.5, linetype = "dashed", colour = "grey"),
+    #panel.grid.minor = element_blank(),
+    # Remove panel background
+    panel.background = element_blank(),
+    # Add axis line
+    axis.line = element_line(colour = "grey"),
+    plot.caption = element_text(hjust = 0.5, face = "italic"),
+    panel.border = element_rect(colour = "black", fill=NA, size=1)) +
+  facet_wrap(~ month) # ~ GeoRegion)
+
+ggsave(plot = plot,
+       filename = "../graphs/brazilrooi_cityall_scatterplot_monthly.png", 
+       width = 12, 
+       height = 8)
+
+
+## CITY_TOTAL line plots ==========================================================
+for(i in key_cities){
+  filename <- paste0("../graphs/policy-briefs/brazilrooi_", i, "_lineplot.png")
+  base_tibble <- 
+    temp_tibble %>%
+    mutate(dum = ifelse((CityName == !!i), "1", "0")) %>%
+    filter((Date < ymd("2020-10-01")) & Date > ymd("2020-02-25"))
+  
+  plot <-
+    ggplot() + 
+    geom_line(data = base_tibble, aes(y = risk_of_openness, group = CityName, size = dum,  x = Date, colour = dum)) + 
+    scale_color_manual(values = c("0" = alpha("gray", 0.4), "1" = "red"), 
+                       breaks = c("1"), 
+                       name = "", 
+                       labels = c(as.character(i))) + 
+    scale_size_manual(values = c("1" = 1, "0" = 0.5)) +
+    scale_x_date(date_breaks = "1 month", date_labels = "%d-%b") +
+    expand_limits(y = c(0, 1)) +
+    guides(size = F) +
+    labs(x = "Date", 
+         y = "Risk of Openness",
+         caption = "Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") +
+    theme(
+      # Remove panel border
+      #panel.border = element_blank(),  
+      # Remove panel grid lines
+      panel.grid.major = element_line(size = 0.5, linetype = "dashed", colour = "grey"),
+      #panel.grid.minor = element_blank(),
+      # Remove panel background
+      panel.background = element_blank(),
+      # Add axis line
+      axis.line = element_line(colour = "black"),
+      plot.caption = element_text(hjust = 0.5, face = "italic"),
+      legend.key = element_blank(),
+      legend.key.size = unit(3, "line"),
+      legend.text = element_text(size = 12),
+      legend.position = "bottom"
+      #panel.border = element_rect(colour = "black", fill=NA, size=1)
+    )
+  
+  ggsave(plot = plot, 
+         filename = filename,
+         width = 12, 
+         height = 8)
+  message(paste0("Completed:", i))
+  
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+base_tibble <- 
+  temp_tibble %>%
+  mutate(dum = ifelse((RegionName == "Sao Paulo"), "1", "0")) %>%
+  filter((Date < ymd("2020-10-01")) & Date > ymd("2020-02-25"))
+
+ggplot() + 
+  geom_line(data = base_tibble, aes(y = risk_of_openness, group = RegionName, size = dum,  x = Date, colour = dum)) + 
+  scale_color_manual(values = c("0" = alpha("gray", 0.4), "1" = "red"), 
+                     breaks = c("1"), 
+                     name = "", 
+                     labels = c("Sao Paulo")) + 
+  scale_size_manual(values = c("1" = 1, "0" = 0.5)) +
+  scale_x_date(date_breaks = "1 month", date_labels = "%d-%b") +
+  expand_limits(y = c(0, 1)) +
+  guides(size = F) +
+  labs(x = "Date", 
+       y = "Risk of Openness",
+       caption = "Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") +
+  theme(
+    # Remove panel border
+    #panel.border = element_blank(),  
+    # Remove panel grid lines
+    panel.grid.major = element_line(size = 0.5, linetype = "dashed", colour = "grey"),
+    #panel.grid.minor = element_blank(),
+    # Remove panel background
+    panel.background = element_blank(),
+    # Add axis line
+    axis.line = element_line(colour = "grey"),
+    plot.caption = element_text(hjust = 0.5, face = "italic"),
+    legend.key = element_blank(),
+    legend.key.size = unit(3, "line"),
+    legend.text = element_text(size = 12),
+    legend.position = "bottom"
+    #panel.border = element_rect(colour = "black", fill=NA, size=1)
+  )
+
 
 # View(
 #   temp_tibble %>%
@@ -157,7 +532,7 @@ month_levels <- c("January", "February", "March", "April", "May", "June", "July"
 base_tibble <- 
   temp_tibble %>%
   mutate(month = month(Date)) %>%
-  group_by(month, RegionName) %>%
+  group_by(month, RegionName, StateCode) %>%
   summarise(mean_rooi = mean(risk_of_openness, na.rm = T),
             mean_stringency = mean(StringencyIndexForDisplay, na.rm = T), 
             mean_rooi = ifelse(is.finite(mean_rooi), mean_rooi, NA),
@@ -169,9 +544,12 @@ base_tibble <-
   filter(month != "January" & month != "October")
 
 base_tibble <- left_join(base_tibble, unique(regionmap %>% select(GeoRegion, RegionName)), by = c("RegionName"))
+
 base_tibble <- 
   base_tibble %>%
-  mutate(GeoRegion = ifelse(is.na(GeoRegion), "Districto Federal", as.character(GeoRegion)))
+  ungroup() %>%
+  mutate(GeoRegion = ifelse(is.na(GeoRegion), "Districto Federal", as.character(GeoRegion)),
+         StateCode = ifelse(RegionName == "Distrito Federal", 53, StateCode))
 
 plot <-
   ggplot(base_tibble, aes(x = mean_rooi, y = mean_stringency, label = RegionName)) +# color = factor(lightup_state), label = CountryCode)) + 
@@ -259,9 +637,62 @@ ggsave(plot = plot,
        width = 12, 
        height = 8)
 
-geopath <- "C:/Users/sapta/Downloads/random/oxford cgrt/bra_adm_ibge_2020_shp/bra_admbnda_adm2_ibge_2020.shp"
+## Chloropleth Maps ---------------------------------------------------
+geopath <- "../data/input/shapefiles/BRUFE250GC_SIR.shp"
+
+month_levels <- c("January", "February", "March", "April", "May", "June", "July", "August", 
+                  "September", "October", "November", "December")
+
+base_tibble <- 
+  temp_tibble %>%
+  mutate(month = month(Date)) %>%
+  group_by(month, RegionName, StateCode) %>%
+  summarise(mean_rooi = mean(risk_of_openness, na.rm = T),
+            mean_stringency = mean(StringencyIndexForDisplay, na.rm = T), 
+            mean_rooi = ifelse(is.finite(mean_rooi), mean_rooi, NA),
+            mean_newcases = mean(moveave_newcases, na.rm = T),
+            mean_newcases = ifelse(is.finite(mean_newcases), mean_newcases, NA),
+            pop = mean(pop, na.rm = T)) %>%
+  mutate(month = month.name[month],
+         month = factor(month, levels = month_levels)) %>%
+  filter(month != "January" & month != "October")
+
+base_tibble <- left_join(base_tibble, unique(regionmap %>% select(GeoRegion, RegionName)), by = c("RegionName"))
+
+base_tibble <- 
+  base_tibble %>%
+  ungroup() %>%
+  mutate(GeoRegion = ifelse(is.na(GeoRegion), "Mid West", as.character(GeoRegion)),
+         StateCode = ifelse(RegionName == "Distrito Federal", 53, StateCode))
+
 
 list.files(geopath)
 brazilshp <- st_read(geopath)
-ggplot(data = brazilshp) + 
-  geom_sf()
+
+brazilshp <- 
+  left_join(brazilshp, base_tibble, by = c("CD_GEOCUF" = "StateCode"))
+
+ggplot(brazilshp) +
+  geom_sf(aes(fill = mean_rooi)) + 
+  ggthemes::theme_map() +
+  labs(title = "",
+       caption = "Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker" ) + 
+  theme(plot.title = element_text(hjust = 0.5), 
+        plot.caption = element_text(hjust = 0.5, face = "italic"), 
+        legend.position = "right", 
+        strip.text = element_text(size = 10)) +
+  scale_fill_viridis_c(option = "viridis", name = "Risk of Openness", na.value = "grey50", direction = -1, 
+                       breaks = c(0, 0.2, 0.4, 0.6, 0.8, 1.0)) + 
+  facet_wrap(~Date)
+
+  
+plot <- 
+  ggplot(data = brazilshp) + 
+  geom_sf(aes(fill = mean_rooi)) + 
+  scale_fill_viridis_c() +
+  facet_wrap(~month)
+
+ggsave(plot = plot,
+       filename = "./brazilrooi_state_chloropleth_monthly_15th.png", 
+       width = 12, 
+       height = 8)
