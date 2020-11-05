@@ -1,3 +1,5 @@
+renv::load()
+renv::restore()
 library(ggplot2)
 library(feather)
 library(lubridate)

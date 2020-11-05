@@ -257,25 +257,29 @@ base_tibble <-
             pop_100k = mean(pop_100k),
             mean_newcases = ifelse(is.finite(mean_newcases), mean_newcases, NA)) %>%
   mutate(month = month.name[month],
-         month = factor(month, levels = month_levels)) %>%
-  filter(month != "January" & month != "October")
+         month = factor(month, levels = month_levels, labels = month_labels)) %>%
+  filter(month != "January" & month != "Outubro")
 
 base_tibble <- left_join(base_tibble, regionmap, by = c("CityName"))
+
+base_tibble <- 
+  base_tibble %>%
+  mutate(GeoRegion = factor(GeoRegion, levels = region_levels, labels = region_labels))
 
 plot <-
   ggplot(base_tibble, aes(x = mean_rooi, y = mean_stringency, label = CityName)) + #, label = CityName)) +# color = factor(lightup_state), label = CountryCode)) + 
   geom_point(aes(size = pop_100k, colour = GeoRegion)) + 
-  scale_colour_viridis_d(name = "Region") +
+  scale_colour_viridis_d(name = "Região") +
   #lims(colour = c("0", "1")) + 
   geom_text_repel(data = subset(base_tibble, CityName %in% key_cities),
                   size = 3, colour = "black") +
 #  geom_hline(yintercept = 50, size = 0.7, linetype = 2) + 
 #  geom_vline(xintercept = 0.5, size = 0.7, linetype = 2) +
-  labs(x = "Risk of Openness", 
-       y = "Stringency Index", 
+  labs(x = "Risco de Abertura", 
+       y = "Índice de Rigidez", 
        #         title = "Stringency Index and Openness Risk over last quarter",
        #         subtitle = "(Bubble Size reflects number of new cases)", 
-       caption = "Bubble Size reflects population \n Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") + 
+       caption = "O tamanho da bolha representa a população \n Fonte: OxCGRT Brazilian Sub-National Covid-19 Policy Responses. Disponível em: https://github.com/OxCGRT/Brazil-covid-policy") + 
   theme(plot.title = element_text(hjust = 0.5), 
         plot.caption = element_text(hjust = 0.5, face = "italic"), 
         plot.subtitle = element_text(hjust = 0.5, size = 10)) +
@@ -325,9 +329,9 @@ for(i in key_cities){
     scale_x_date(date_breaks = "1 month", date_labels = "%d-%b") +
     expand_limits(y = c(0, 1)) +
     guides(size = F) +
-    labs(x = "Date", 
-         y = "Risk of Openness",
-         caption = "Source: Oxford COVID-19 Government Response Tracker. More at https://github.com/OxCGRT/covid-policy-tracker or bsg.ox.ac.uk/covidtracker") +
+    labs(x = "Data", 
+         y = "Risco de Abertura",
+         caption = "Fonte: OxCGRT Brazilian Sub-National Covid-19 Policy Responses. Disponível em: https://github.com/OxCGRT/Brazil-covid-policy") +
     theme(
       # Remove panel border
       #panel.border = element_blank(),  

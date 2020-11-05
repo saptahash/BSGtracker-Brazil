@@ -5,16 +5,16 @@ library(zoo)
 library(RcppRoll)
 library(feather)
 library(lubridate)
-renv::install(packages = c("feather"))
-renv::snapshot()
+#renv::install(packages = c("feather"))
+#renv::snapshot()
 # set path
 path <- "C:/Users/sapta/Downloads/random/oxford cgrt"
 
 # import all the necessary data
 testingdata <- read.csv(paste0(path, "/INFLUD20-09102020/INFLUD20-09102020.csv"), sep = ";")
-oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_271020_145615_BRA.csv"))
+#oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_271020_145615_BRA.csv"))
 
-#oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_191020_091820_BRAImputed.csv"))
+oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_191020_091820_BRAImputed.csv"))
 
 casedata <- read_csv(url("https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-states.csv"), col_types = cols(tests = col_double(),
                                                                                                                                tests_per_100k_inhabitants = col_double()))
