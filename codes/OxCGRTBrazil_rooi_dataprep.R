@@ -12,7 +12,7 @@ path <- "C:/Users/sapta/Downloads/random/oxford cgrt"
 
 # import all the necessary data
 testingdata <- read.csv(paste0(path, "/INFLUD20-09102020/INFLUD20-09102020.csv"), sep = ";")
-oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_271020_145615_BRA.csv"))
+oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_131120_115044_BRAImputed.csv"))
 
 #oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_191020_091820_BRAImputed.csv"))
 
@@ -66,7 +66,7 @@ casedata <-
 oxcgrtdata <-
   oxcgrtdata %>%
   mutate(Date = lubridate::ymd(Date)) %>%
-  filter(Jurisdiction == "STATE_GOV") %>%
+  filter(Jurisdiction == "STATE_ALL") %>%
   select(-contains(c("Notes", "City", "Country")))
 
 oxcgrtdata <- 
