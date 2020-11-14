@@ -207,5 +207,5 @@ oxcgrtdata <-
                                    rooi_unadjusted), 
          risk_of_openness = ifelse(is.na(totalCases) | totalCases == 0, NA, risk_of_openness))
 
-write.csv(oxcgrtdata, "./brazil_stategov_risk_of_openness.csv")
-write_feather(oxcgrtdata, "./brazil_stategov_risk_of_openness.feather")
+write.csv(oxcgrtdata, "./brazil_stateall_risk_of_openness.csv")
+write_feather(oxcgrtdata, "./brazil_stateall_risk_of_openness.feather")
