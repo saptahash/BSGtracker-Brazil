@@ -14,7 +14,7 @@ path <- "C:/Users/sapta/Downloads/random/oxford cgrt"
 testingdata <- read.csv(paste0(path, "/INFLUD20-09102020/INFLUD20-09102020.csv"), sep = ";")
 #oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_271020_145615_BRA.csv"))
 
-oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_131120_115044_BRAImputed.csv"))
+oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Brazil_imputedlatest.csv"))
 
 casedata <- read_csv(url("https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-states.csv"), col_types = cols(tests = col_double(),
                                                                                                                                tests_per_100k_inhabitants = col_double()))
@@ -66,7 +66,7 @@ casedata <-
 oxcgrtdata <-
   oxcgrtdata %>%
   mutate(Date = lubridate::ymd(Date)) %>%
-  filter(Jurisdiction == "STATE_ALL") %>%
+  filter(Jurisdiction == "STATE_TOTAL") %>%
   select(-contains(c("Notes", "City", "Country")))
 
 oxcgrtdata <- 
@@ -174,9 +174,9 @@ oxcgrtdata <-
 # risk of importing and exporting cases
 oxcgrtdata <- 
   oxcgrtdata %>%
-  mutate(c7risk = case_when(C7_Restrictions.on.internal.movement == 2 & C7_Flag == 1 ~ 2, 
-                            C7_Restrictions.on.internal.movement == 2 & C7_Flag == 0 ~ 1,
-                            C7_Restrictions.on.internal.movement == 1 & C7_Flag == 1 ~ 1, 
+  mutate(c7risk = case_when(C7_Restrictions.on.internal.movement == 2 & C7_Flag == 1 ~ 1, 
+                            C7_Restrictions.on.internal.movement == 2 & C7_Flag == 0 ~ 0.5,
+                            C7_Restrictions.on.internal.movement == 1 & C7_Flag == 1 ~ 0.5, 
                             C7_Restrictions.on.internal.movement == 1 & C7_Flag == 0 ~ 0,
                             C7_Restrictions.on.internal.movement == 0 ~ 0),
          c8risk = case_when(C8_International.travel.controls == 0 ~ 1, 
