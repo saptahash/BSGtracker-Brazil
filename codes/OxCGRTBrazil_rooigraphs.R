@@ -16,7 +16,7 @@ renv::snapshot()
 # 3. Chloropleths
 
 ## Import Data -----------------------------------------
-oxcgrtdata <- read_feather("./brazil_state_risk_of_openness.feather")
+oxcgrtdata <- read_feather("./brazil_stateall_risk_of_openness.feather")
 city_all <- read_feather("./brazil_cityall_risk_of_openness.feather") 
 regionmap <- read.csv("brazil_citystateregions_geo_pb.csv")
 

@@ -14,7 +14,7 @@ path <- "C:/Users/sapta/Downloads/random/oxford cgrt"
 testingdata <- read.csv(paste0(path, "/INFLUD20-09102020/INFLUD20-09102020.csv"), sep = ";")
 #oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_271020_145615_BRA.csv"))
 
-oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_191020_091820_BRAImputed.csv"))
+oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_131120_115044_BRAImputed.csv"))
 
 casedata <- read_csv(url("https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-states.csv"), col_types = cols(tests = col_double(),
                                                                                                                                tests_per_100k_inhabitants = col_double()))
@@ -66,7 +66,7 @@ casedata <-
 oxcgrtdata <-
   oxcgrtdata %>%
   mutate(Date = lubridate::ymd(Date)) %>%
-  filter(Jurisdiction == "STATE_GOV") %>%
+  filter(Jurisdiction == "STATE_ALL") %>%
   select(-contains(c("Notes", "City", "Country")))
 
 oxcgrtdata <- 
@@ -207,5 +207,5 @@ oxcgrtdata <-
                                    rooi_unadjusted), 
          risk_of_openness = ifelse(is.na(totalCases) | totalCases == 0, NA, risk_of_openness))
 
-write.csv(oxcgrtdata, "./brazil_stategov_risk_of_openness.csv")
-write_feather(oxcgrtdata, "./brazil_stategov_risk_of_openness.feather")
+write.csv(oxcgrtdata, "./brazil_stateall_risk_of_openness.csv")
+write_feather(oxcgrtdata, "./brazil_stateall_risk_of_openness.feather")

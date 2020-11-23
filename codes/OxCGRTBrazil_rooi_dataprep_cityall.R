@@ -82,7 +82,7 @@ google.mobility_city <-
 ## city ROOI
 
 ## importing datasets ----------------------------------------------
-oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_191020_091820_BRAImputed.csv"))
+oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_131120_115044_BRAImputed.csv"))
 citycasedata <- read_csv(url("https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-cities-time.csv"))
 
 # RUN FROM HERE IF ALL BASIC FILES ARE LOADED

@@ -1,0 +1,50 @@
+Adding latest graphs with changes and latest code
+# Please enter the commit message for your changes. Lines starting
+# with '#' will be ignored, and an empty message aborts the commit.
+#
+# On branch main
+# Your branch is up to date with 'origin/main'.
+#
+# Changes to be committed:
+#	modified:   brazilrooi_cityall_scatterplot_monthly.png
+#	modified:   brazilrooi_stateall_scatterplotdetail_monthly.png
+#	renamed:    policy-briefs/brazilrooi_Belem_lineplot.png -> policy-briefs/brazilrooi_city_Belem_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Fortaleza_lineplot.png -> policy-briefs/brazilrooi_city_Fortaleza_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Goiania_lineplot.png -> policy-briefs/brazilrooi_city_Goiania_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Manaus_lineplot.png -> policy-briefs/brazilrooi_city_Manaus_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Porto Alegre_lineplot.png -> policy-briefs/brazilrooi_city_Porto Alegre_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Recife_lineplot.png -> policy-briefs/brazilrooi_city_Recife_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Rio de Janeiro_lineplot.png -> policy-briefs/brazilrooi_city_Rio de Janeiro_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Salvador_lineplot.png -> policy-briefs/brazilrooi_city_Salvador_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Sao Paulo_lineplot.png -> policy-briefs/brazilrooi_city_Sao Paulo_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Acre_lineplot.png -> policy-briefs/brazilrooi_state_Acre_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Alagoas_lineplot.png -> policy-briefs/brazilrooi_state_Alagoas_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Amapa_lineplot.png -> policy-briefs/brazilrooi_state_Amapa_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Amazonas_lineplot.png -> policy-briefs/brazilrooi_state_Amazonas_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Bahia_lineplot.png -> policy-briefs/brazilrooi_state_Bahia_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Ceara_lineplot.png -> policy-briefs/brazilrooi_state_Ceara_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Distrito Federal_lineplot.png -> policy-briefs/brazilrooi_state_Distrito Federal_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Espirito Santo_lineplot.png -> policy-briefs/brazilrooi_state_Espirito Santo_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Goias_lineplot.png -> policy-briefs/brazilrooi_state_Goias_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Maranhao_lineplot.png -> policy-briefs/brazilrooi_state_Maranhao_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Mato Grosso do Sul_lineplot.png -> policy-briefs/brazilrooi_state_Mato Grosso do Sul_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Mato Grosso_lineplot.png -> policy-briefs/brazilrooi_state_Mato Grosso_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Minas Gerais_lineplot.png -> policy-briefs/brazilrooi_state_Minas Gerais_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Para_lineplot.png -> policy-briefs/brazilrooi_state_Para_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Paraiba_lineplot.png -> policy-briefs/brazilrooi_state_Paraiba_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Parana_lineplot.png -> policy-briefs/brazilrooi_state_Parana_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Pernambuco_lineplot.png -> policy-briefs/brazilrooi_state_Pernambuco_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Piaui_lineplot.png -> policy-briefs/brazilrooi_state_Piaui_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Rio Grande do Norte_lineplot.png -> policy-briefs/brazilrooi_state_Rio Grande do Norte_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Rio Grande do Sul_lineplot.png -> policy-briefs/brazilrooi_state_Rio Grande do Sul_lineplot.png
+#	new file:   policy-briefs/brazilrooi_state_Rio de Janeiro_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Rondonia_lineplot.png -> policy-briefs/brazilrooi_state_Rondonia_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Roraima_lineplot.png -> policy-briefs/brazilrooi_state_Roraima_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Santa Catarina_lineplot.png -> policy-briefs/brazilrooi_state_Santa Catarina_lineplot.png
+#	new file:   policy-briefs/brazilrooi_state_Sao Paulo_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Sergipe_lineplot.png -> policy-briefs/brazilrooi_state_Sergipe_lineplot.png
+#	renamed:    policy-briefs/brazilrooi_Tocantins_lineplot.png -> policy-briefs/brazilrooi_state_Tocantins_lineplot.png
+#
+# Changes not staged for commit:
+#	modified:   ../codes/OxCGRTBrazil_rooigraphs.R
+#
