@@ -82,7 +82,7 @@ google.mobility_city <-
 ## city ROOI
 
 ## importing datasets ----------------------------------------------
-oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Download_131120_115044_BRAImputed.csv"))
+oxcgrtdata <- read.csv(paste0(path, "/OxCGRT_Brazil_imputedlatest.csv"))
 citycasedata <- read_csv(url("https://raw.githubusercontent.com/wcota/covid19br/master/cases-brazil-cities-time.csv"))
 
 # RUN FROM HERE IF ALL BASIC FILES ARE LOADED
@@ -90,7 +90,7 @@ citycasedata <- read_csv(url("https://raw.githubusercontent.com/wcota/covid19br/
 ## setup CITY_ALL base file ---------------------------------------------------
 city_all <-
   oxcgrtdata %>%
-  filter(Jurisdiction == "CITY_ALL") %>%
+  filter(Jurisdiction == "CITY_TOTAL") %>%
   mutate(ibgeID = str_extract(CityCode, pattern = "[0-9]*$")) %>%
   select(-contains(c("Notes", "Country")), -Jurisdiction, H3_Contact.tracing, H2_Testing.policy,
          contains("Index"), C8_International.travel.controls, C7_Restrictions.on.internal.movement,
@@ -302,9 +302,9 @@ city_all <-
 # constructing risk of importing and exporting cases -----------------------------------
 city_all <- 
   city_all %>%
-  mutate(c7risk = case_when(C7_Restrictions.on.internal.movement == 2 & C7_Flag == 1 ~ 2, 
-                            C7_Restrictions.on.internal.movement == 2 & C7_Flag == 0 ~ 1,
-                            C7_Restrictions.on.internal.movement == 1 & C7_Flag == 1 ~ 1, 
+  mutate(c7risk = case_when(C7_Restrictions.on.internal.movement == 2 & C7_Flag == 1 ~ 1, 
+                            C7_Restrictions.on.internal.movement == 2 & C7_Flag == 0 ~ 0.5,
+                            C7_Restrictions.on.internal.movement == 1 & C7_Flag == 1 ~ 0.5, 
                             C7_Restrictions.on.internal.movement == 1 & C7_Flag == 0 ~ 0,
                             C7_Restrictions.on.internal.movement == 0 ~ 0),
          c8risk = case_when(C8_International.travel.controls == 0 ~ 1, 
