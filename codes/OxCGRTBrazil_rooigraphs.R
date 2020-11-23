@@ -7,8 +7,8 @@ library(dplyr)
 library(tidyr)
 library(stringr)
 library(ggthemes)
-renv::install("datapasta")
-renv::snapshot()
+#renv::install("datapasta")
+#renv::snapshot()
 
 # Graphs to produce: 
 # 1. Scatter Plot
@@ -228,6 +228,12 @@ ggsave(plot = plot,
 
 # END of STATE_TOTAL graphs ==========================================================
 
+base_tibble <- 
+  oxcgrtdata %>%
+  select(RegionName, RegionCode, StateCode, Date, manage_imported_cases, cases_controlled, community_understanding, test_and_trace, endemic_factor, risk_of_openness)
+
+write.csv(base_tibble, "./OxCGRT_BrazilStates_riskofopenness.csv")
+
 # CITY_TOTAL GRAPHS --------------------------------------------------------
 
 ## CITY_TOTAL scatter plots ==========================================================
@@ -358,6 +364,12 @@ for(i in key_cities){
   
 }
 
+## CITY_ALL write to data ------------------------------------------------
+base_tibble <- 
+  city_all %>%
+  select(RegionName, RegionCode, CityName, CityCode, Date, manage_imported_cases, cases_controlled, community_understanding, test_and_trace, endemic_factor, risk_of_openness)
+
+write.csv(base_tibble, "./OxCGRT_BrazilCities_riskofopenness.csv")
 
 
 
