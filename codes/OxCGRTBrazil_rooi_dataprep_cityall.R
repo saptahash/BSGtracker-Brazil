@@ -297,7 +297,7 @@ city_all <-
 city_all <- 
   city_all %>% 
   mutate(community_understanding = (0.5*cases_controlled) + (1 - 0.5*cases_controlled)*(mob-20)/100,
-         community_understanding = ifelse(H1_Public.information.campaigns != 2, 0, community_understanding)) 
+         community_understanding = ifelse(H1_Public.information.campaigns != 2, 1, community_understanding)) 
 
 # constructing risk of importing and exporting cases -----------------------------------
 city_all <- 
